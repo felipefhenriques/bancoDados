@@ -61,7 +61,7 @@ select count(*) as clientes, country.country as 'País'
 from customer
 inner join address on customer.address_id = address.address_id
 inner join city on address.city_id = city.city_id
-inner join country on city.city_id = country.country_id
+inner join country on city.country_id = country.country_id
 group by country;
 
 select * from clientesPais;
@@ -78,9 +78,18 @@ INNER JOIN country
 ON country.country_id = city.country_id
 GROUP BY country;
 
+create or replace view idiomaFilme as
+select language.name as 'Língua', count(*) as 'Quantidade filmes'
+from film
+inner join language on film.language_id = language.language_id
+group by 'Língua';
+
 SELECT * FROM pais_cliente;
 
 select * from payment where payment_id = 3;
+
+
+
 
 delimiter $$
 create function valor(wid int(10))
@@ -179,6 +188,20 @@ drop function comissaoIF;
 select comissaoIF(8);
 
 delimiter $$
+create function acessivel(valor decimal(10,2))
+returns varchar(3)
+deterministic
+begin
+declare aces varchar (6);
+declare valor decimal (10,2);
+select amount into valor from film_list.price;
+if valor > 3 then set aces = 'Sim';
+else aces = 'Não';
+end if;
+return aces;
+end;
+
+delimiter $$
 create procedure listagem1(pesquisa varchar(50))
 begin
 select first_name from actor 
@@ -223,6 +246,8 @@ drop procedure listagem3;
 
 call listagem3(1, '%');
 call listagem3(0, '%');
+
+
 
 delimiter $$
 create procedure listagem4(tipo int)
