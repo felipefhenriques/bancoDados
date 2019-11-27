@@ -84,6 +84,16 @@ from film
 inner join language on film.language_id = language.language_id
 group by 'Língua';
 
+select * from idiomaFilme;
+
+create or replace view filmesAtor as
+select actor.first_name as 'Nome do ator', count(*) as 'Quantidade de filmes'
+from film_actor
+inner join actor on film_actor.actor_id = actor.actor_id
+group by first_name;
+
+select * from filmesAtor;
+
 SELECT * FROM pais_cliente;
 
 select * from payment where payment_id = 3;
@@ -162,6 +172,26 @@ drop function comissaoNome;
 select comissaoNome(9) as 'Comissao com nome';
 
 delimiter %%
+create function nova_comissao(parametro int(10))
+returns varchar(255)
+deterministic
+begin
+declare valor decimal(10,2);
+declare comissao decimal(10,2);
+declare nome varchar(50);
+declare texto varchar(250);
+select amount into valor from payment where parametro = payment.payment_id;
+set comissao = valor * 0.05;
+select staff.first_name into nome from payment 
+inner join staff on payment.staff_id = staff.staff_id where payment_id = parametro;
+set texto = concat('Para o pagamento de ', valor, ' a comissão de ', nome, ' é de ', comissao);
+return texto;
+end; 
+delimiter;
+
+select nova_comissao(4) as 'Comissão desejada';
+
+delimiter %%
 create function comissaoIF(parametro int(10))
 returns varchar(255)
 deterministic
@@ -192,14 +222,19 @@ create function acessivel(valor decimal(10,2))
 returns varchar(3)
 deterministic
 begin
-declare aces varchar (6);
-declare valor decimal (10,2);
-select amount into valor from film_list.price;
-if valor > 3 then set aces = 'Sim';
-else aces = 'Não';
+declare aces varchar (3);
+
+if valor > 3 then set aces = 'Não';
+else set aces = 'Sim';
 end if;
 return aces;
 end;
+$$ 
+delimiter;
+
+select acessivel(7) as 'É acessível?';
+
+drop function acessivel;
 
 delimiter $$
 create procedure listagem1(pesquisa varchar(50))
@@ -209,6 +244,7 @@ where first_name like pesquisa
 order by first_name;
 
 end;$$
+delimiter;
 
 drop procedure listagem1;
 
@@ -221,7 +257,7 @@ select concat(last_name,', ', first_name) as 'Nome completo' from actor
 where first_name like pesquisa
 order by first_name;
 end;
-$$
+$$ delimiter;
 
 drop procedure listagem2;
 
@@ -240,7 +276,7 @@ where first_name like pesquisa
 order by first_name;
 end if;
 end;
-$$
+$$ delimiter;
 
 drop procedure listagem3;
 
@@ -261,10 +297,21 @@ else if tipo = 0 then
 end if;
 select concat(last_name, ', ', first_name, ' está ', atividade) as 'Atividade cliente' from customer
 where active like tipo order by last_name;
-end;
-$$ 
+end; $$
+
 
 drop procedure listagem4;
 
 call listagem4(0);
+
+delimiter $$ 
+create procedure nomes(procura varchar(40))
+begin
+select concat(first_name, ' ', last_name, ' é um ator') as 'Nomes' from actor
+where first_name like procura;
+end; 
+
+drop procedure nomes;
+
+call nomes ('a%');
 
